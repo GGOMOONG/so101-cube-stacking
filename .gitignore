@@ -1,0 +1,17 @@
+# 학습 체크포인트(15 GB) — 허브 moonbeards/* 참조
+outputs/
+# 대화 백업·폐기·로그·임시
+transcripts/
+discard/
+logs/
+__pycache__/
+*.pyc
+.DS_Store
+*_backup_1009.*
+calib/sim/_pdfcheck/
+# 휴대폰 원본(1 GB 이상) — 720p 변환본만 포함
+videos/loop_stack_unstack1.MP4
+videos/loop_stack_unstack2.MP4
+videos/sim_policy_*.mp4
+videos/summary_2min_draft.mp4
+backup_transcript.sh

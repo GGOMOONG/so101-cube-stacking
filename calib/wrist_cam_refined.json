@@ -1,0 +1,12 @@
+{
+  "dz_forward_mm": 30,
+  "dy_up_mm": -5,
+  "tilt_down_deg": 8,
+  "mjcf": "<camera name=\"wrist\" pos=\"0.008231 0.047927 -0.020636\" quat=\"0.989280 -0.142718 0.012025 -0.028509\" resolution=\"640 480\" focalpixel=\"703.38 699.66\" principalpixel=\"-3.40 6.28\" sensorsize=\"0.0036 0.0027\"/>",
+  "real_target": [
+    369.3478833218368,
+    361.39065588401877,
+    241.0,
+    0.0
+  ]
+}

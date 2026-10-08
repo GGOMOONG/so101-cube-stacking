@@ -1,0 +1,10 @@
+{
+  "grid_origin_note": "2쪽 격자 원점(빨간 점). 이미지에서 격자 +x는 왼쪽, +y는 아래(로봇에서 멀어지는 방향).",
+  "robot_base_center_in_grid_mm": [
+    -90,
+    -5
+  ],
+  "robot_base_center_measured": "2026-09-23 01:52 본인 자 측정: 격자 원점 기준 x=-90, y=-5 mm (받침대 중심이 원점보다 로봇 쪽으로 5 mm).",
+  "table_z_mm": 0,
+  "cube_side_mm": 30
+}

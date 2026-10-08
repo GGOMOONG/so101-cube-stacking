@@ -1,0 +1,24 @@
+#!/bin/zsh
+# A. v2 학습 곡선: 팟이 30분마다 허브 루트에 올리는 중간 체크포인트가 바뀔 때마다 시뮬 A 10회 평가(단단한 큐브·kp16 = v2 생성 조건).
+# 로그 logs/watch_ckpt_v2.log, 결과 calib/sim_policy_runs.csv 태그 ckpt2_<시각>_A. 최종(README.md) 도착 후엔 종료(최종 평가는 watch_sim_policy_v2.sh가 담당).
+source ~/miniconda3/etc/profile.d/conda.sh; conda activate lerobot
+cd ~/robotics; mkdir -p logs; LOG=logs/watch_ckpt_v2.log; MODEL=moonbeards/smolvla_sim_stack_v2; last=""
+echo "$(date '+%m-%d %H:%M') 체크포인트 감시 시작" >> $LOG
+while true; do
+  sha=$(python -c "
+from huggingface_hub import HfApi
+try:
+    i = HfApi().get_paths_info('$MODEL', ['model.safetensors'])
+    print(i[0].lfs.sha256 if i and i[0].lfs else '')
+except Exception: print('')" 2>/dev/null)
+  if [[ -n "$sha" && "$sha" != "$last" ]]; then
+    last=$sha; tag=ckpt2_$(date '+%H%M')
+    echo "$(date '+%m-%d %H:%M') 새 체크포인트(${sha:0:8}) → 시뮬 A 10회 ($tag)" >> $LOG
+    rm -rf ~/.cache/huggingface/hub/models--moonbeards--smolvla_sim_stack_v2
+    python sim_policy_eval.py --model $MODEL --cond A --n 10 --dur 45 --stiff-cube --kp-joints 16,,,,16 --kv-joints 0.5,,,,0.5 --tag ${tag}_A --video 1 2>&1 | grep -E "^결과|^\[" | sed 's/추론.*//' | cut -c1-160 >> $LOG
+  fi
+  if python -c "from huggingface_hub import HfApi; import sys; sys.exit(0 if HfApi().file_exists('$MODEL','README.md') else 1)" 2>/dev/null; then
+    echo "$(date '+%m-%d %H:%M') 최종 모델 도착 → 체크포인트 감시 종료" >> $LOG; break
+  fi
+  sleep 600
+done
