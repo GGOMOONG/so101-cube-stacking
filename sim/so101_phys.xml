@@ -51,7 +51,7 @@
               <geom pos="0.0077 0.0001 -0.0234" quat="0.707105 -0.707108 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="sts3215_03a_v1" contype="0" conaffinity="0" group="1"/>
               <geom pos="0 -0.000218214 0.000949706" quat="1.32679e-06 -1 0 0" type="mesh" rgba="0.13 0.13 0.13 1" mesh="wrist_roll_follower_so101_v1" contype="0" conaffinity="0" group="1"/>
               <geom name="pad_fixed" type="box" size="0.035000 0.002000 0.010000" pos="0.002954 0.001158 -0.064026" quat="0.403534 0.403536 0.580656 -0.580653" rgba="0.2 0.2 0.8 0.6" friction="1.0 0.01 0.001" contype="1" conaffinity="1"/>
-              <camera name="wrist" pos="0.009641 0.064839 0.004603" quat="0.982113 -0.185734 0.013256 -0.027957" resolution="640 480" focalpixel="703.38 699.66" principalpixel="-3.40 6.28" sensorsize="0.0036 0.0027"/>
+              <camera name="wrist" pos="0.008878 0.065715 0.004530" quat="0.981609 -0.188871 0.014079 -0.023961" resolution="640 480" focalpixel="703.38 699.66" principalpixel="-3.40 6.28" sensorsize="0.0036 0.0027"/>
               <body name="moving_jaw_so101_v1_link" pos="0.0202 0.0188 -0.0234" quat="0.707105 0.707108 -1.85362e-08 1.85363e-08">
                 <inertial pos="-0.00157495 -0.0300244 0.0192755" quat="0.695265 0.717965 -0.0245618 -0.0230097" mass="0.012" diaginertia="6.63582e-06 5.29092e-06 1.86523e-06"/>
                 <joint name="gripper" damping="0.05" armature="0.002" range="-0.174533 1.74533" actuatorfrcrange="-10 10"/>

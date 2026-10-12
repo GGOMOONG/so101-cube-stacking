@@ -42,8 +42,10 @@ def wrist_xml(pcb=None):
 
 
 class DemoGen:
-    def __init__(self, kp=None, light=False, rng=None, rand=False, dart=0.0):
+    def __init__(self, kp=None, light=False, rng=None, rand=False, dart=0.0, diverse=False):
         self.k = Kin(); self.kp = kp; self.light = light; self.rand = rand; self.rng = rng or np.random.default_rng(0)
+        self.diverse = diverse   # 10-12 시연 다양화: 접근 전략 3종(옆/위/옆-높게), 속도 ×0.7~1.4, 머뭇거림, 30 %는 빗나간 잡기 → 다시 열고 재접근(복구 행동이 기록됨)
+        self._strat = 'side'; self._vscale = 1.0; self._retry = False
         self.dart = dart   # DART식 교란: 접근·운반 구간에서 실행 명령에 관절 잡음(표준편차 °)을 주되 기록되는 action은 계획기의 깨끗한 명령 → '빗나간 상태에서 바로잡는' 데이터
 
     def new_scene(self, cubes):
@@ -99,11 +101,21 @@ class DemoGen:
         gg = s.gg; lever = gg.lever / np.linalg.norm(gg.lever); n_open = np.cross(gg.axis / np.linalg.norm(gg.axis), lever)
         q_tmp, _ = ik((o[0], o[1], GRASP_Z + HOVER), OPEN)
         q_true = s.k.urdf_to_reading(s.k.reading_to_urdf(q_tmp) + np.array([0, 0, 0, 0, s.ROLL_FIX_DEG])); _, Rm = s.k.fk_base(q_true); n_w = s.k.R.T @ (Rm @ (gg.Rf @ n_open)); n_w[2] = 0; n_w /= np.linalg.norm(n_w)
-        off = float(self.rng.uniform(8, 20)) if _MS else 0.0; p_side = np.array([o[0], o[1], 0.0]) - off * n_w
-        q1, e1 = ik((p_side[0], p_side[1], GRASP_Z + 40.0), OPEN); q1b, e1b = ik((p_side[0], p_side[1], 10.0), OPEN, q1); q2, e2 = ik((o[0], o[1], GRASP_Z), OPEN, q1b)
+        strat = os.environ.get('STRAT') or (str(self.rng.choice(['side', 'top', 'side_high'], p=[0.4, 0.35, 0.25])) if self.diverse else 'side'); self._strat = strat
+        off = (0.0 if strat == 'top' else float(self.rng.uniform(8, 20))) if _MS else 0.0; p_side = np.array([o[0], o[1], 0.0]) - off * n_w
+        z_low = {'side': 10.0, 'top': GRASP_Z + 12.0, 'side_high': 22.0}[strat]
+        q1, e1 = ik((p_side[0], p_side[1], GRASP_Z + 40.0), OPEN); q1b, e1b = ik((p_side[0], p_side[1], z_low), OPEN, q1); q2, e2 = ik((o[0], o[1], GRASP_Z), OPEN, q1b)
         if max(e1, e1b, e2) > 3: return None
         steps += [("주황 옆 대기", np.r_[q1, OPEN]), ("주황 옆 낮게", np.r_[q1b, OPEN]), ("주황 맞추기", np.r_[q2, OPEN]), ("닫기", np.r_[q2, CLOSE]), ("들어올리기", np.r_[q1, CLOSE])]
         self._place = (r_, rang, roll, r30); return steps
+
+    def plan_miss(self, s):
+        """다양화: 일부러 12~22 mm 빗나간 자리에서 닫았다가 다시 열고 올라오는 구간(실패 후 복구 시연). 이어서 plan()을 다시 불러 실제 큐브 위치로 잡는다."""
+        o, _ = s.cube_grid('orange'); roll = self._place[2]; th = self.rng.uniform(0, 2 * np.pi); d = self.rng.uniform(12, 22)
+        m = (o[0] + d * np.cos(th), o[1] + d * np.sin(th))
+        q1, e1 = s.ik((m[0], m[1], GRASP_Z + 40.0), roll, OPEN); q2, e2 = s.ik((m[0], m[1], GRASP_Z + 1.0), roll, OPEN, q0=q1)
+        if max(e1, e2) > 3: return None
+        return [('빗나간 대기', np.r_[q1, OPEN]), ('빗나간 내리기', np.r_[q2, OPEN]), ('빗나간 닫기', np.r_[q2, CLOSE]), ('다시 열기', np.r_[q2, OPEN]), ('다시 올리기', np.r_[q1, OPEN])]
 
     def plan_place(self, s, in_hand):
         r_, rang, roll, r30 = self._place
@@ -127,6 +139,7 @@ class DemoGen:
         s = self.new_scene(cubes); s.set_state(rest); s.set_ctrl(rest); s.settle(0.3)
         steps = self.plan(s)
         if steps is None: return False, 0, "IK 불가"
+        self._vscale = float(self.rng.uniform(0.7, 1.4)) if self.diverse else 1.0; self._retry = bool(self.diverse and self.rng.random() < 0.3)
         frames = [0]; cur = rest.copy(); in_hand = None; protect = [False]
         def tick(target, exec_=None):
             nonlocal cur
@@ -142,7 +155,7 @@ class DemoGen:
             nonlocal cur
             r0 = cur.copy(); rt = np.asarray(target, float)
             if _MS:   # 실물 단계별 최고 속도(90분위) 분포에서 뽑음; 코사인 보간의 최고 속도 = (π/2)·Δq/시간
-                v = float(self.rng.choice([x for x in _MS[{"app": "v_app", "tr": "v_tr", "ret": "v_ret"}[phase]] if x > 20]))
+                v = float(self.rng.choice([x for x in _MS[{"app": "v_app", "tr": "v_tr", "ret": "v_ret"}[phase]] if x > 20])) * self._vscale
                 dur = max(min_dur, (np.pi / 2) * np.abs(rt[:5] - r0[:5]).max() / v)
             else:
                 dur = max(min_dur, np.abs(rt[:5] - r0[:5]).max() / MAX_DEG_S)
@@ -157,9 +170,18 @@ class DemoGen:
             if verbose and d.any(): print(f"    교란 {np.round(d[:4],1)}°")
         start_pause = float(np.clip(self.rng.choice(_MS["start_pause"]), 0.2, 3.6)) if _MS else 0.5
         for _ in range(int(start_pause * FPS)): tick(rest)          # 실물처럼 시작 정지(중앙값 2.9 s)
+        if self._retry:                                              # 다양화: 빗나간 잡기 → 다시 열기 → 재계획(큐브가 밀렸으면 새 위치로)
+            miss = self.plan_miss(s)
+            if miss is not None:
+                protect[0] = True
+                for name, tgt in miss: move(tgt, hold=(0.5 if name == '빗나간 닫기' else 0.2), phase='app')
+                steps = self.plan(s)
+                if steps is None: return False, frames[0], '재계획 IK 불가'
+            else: self._retry = False
         for name, tgt in steps:
             protect[0] = name in ("주황 맞추기", "닫기", "들어올리기")                       # 정밀 구간·들어올리기는 교란 없음
-            move(tgt, hold=(0.5 if name in ("닫기",) else 0.2), phase=("tr" if name == "들어올리기" else "app"))
+            hes = float(self.rng.uniform(0.3, 1.0)) if (self.diverse and name in ('주황 옆 낮게', '주황 맞추기') and self.rng.random() < 0.3) else 0.0   # 머뭇거림
+            move(tgt, hold=(0.5 if name in ("닫기",) else 0.2) + hes, phase=("tr" if name == "들어올리기" else "app"))
             if verbose: print(f"    {name}: 주황 {np.round(s.cube_grid('orange')[0],1)} 빨강 {np.round(s.cube_grid('red')[0],1)} 접촉(주황) {s.contacts('orange')} 접촉(빨강) {s.contacts('red')}")
         o, _ = s.cube_grid("orange"); tip = s.tip_grid(s.extra(self._place[3])); in_hand = o - tip
         if o[2] < 35: return False, frames[0], "들어올리기 실패"
@@ -190,7 +212,7 @@ class DemoGen:
         for _ in range(int(end_pause * FPS)): tick(rest)          # 실물 시연처럼 끝 정지(중앙값 0.7 s)
         o, tilt = s.cube_grid("orange"); r_, _ = s.cube_grid("red")
         ok = abs(o[2] - 45) < 6 and np.linalg.norm(o[:2] - r_[:2]) < 10 and tilt < 10
-        return ok, frames[0], f"주황 {np.round(o,1)} 빨강 {np.round(r_,1)} 기울기 {tilt:.0f}°"
+        return ok, frames[0], f"주황 {np.round(o,1)} 빨강 {np.round(r_,1)} 기울기 {tilt:.0f}°" + (f" [{self._strat} v{self._vscale:.2f}{' retry' if self._retry else ''}]" if self.diverse else "")
 
     def sample_cubes(self, mode="demo"):
         if mode in ("real", "mix") and _PL:
@@ -211,6 +233,7 @@ class DemoGen:
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(); ap.add_argument("--n", type=int, default=2); ap.add_argument("--repo", default="moonbeards/sim_stack_test"); ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--kp", type=float, default=None); ap.add_argument("--keep-failures", action="store_true"); ap.add_argument("--range", default="mix"); ap.add_argument("--light", action="store_true"); ap.add_argument("--rand", action="store_true", help="도메인 무작위화(조명·책상·큐브 색/크기·카메라 자세)"); ap.add_argument("--soft-cube", action="store_true", help="예전 무른 큐브 접촉(sim_stack_v1 생성 조건)"); ap.add_argument("--dart", type=float, default=0.0, help="DART식 교란 표준편차(°), 예 2"); ap.add_argument("--pcb", action="store_true", help="손목 카메라 기판 geom(v3)"); ap.add_argument("--wrist-cam", default=None, help="손목 카메라 json(예 calib/wrist_cam_v3.json)"); ap.add_argument("--appearance", default=None, help="외관 json(예 calib/sim_appearance_v3.json)"); ap.add_argument("--kp-joints", default=None, help="관절별 kp 덮어쓰기, 예 16,,,,16"); ap.add_argument("--kv-joints", default=None); ap.add_argument("--preview", action="store_true"); ap.add_argument("--verbose", action="store_true")
+    ap.add_argument("--diverse", action="store_true", help="시연 다양화: 접근 전략 3종·속도·머뭇거림·빗나간 잡기 후 복구(30 %)")
     a = ap.parse_args(); os.chdir(os.path.expanduser("~/robotics"))
     from sim_phys import PhysSim
     import sim_phys as _sp
@@ -229,7 +252,7 @@ if __name__ == "__main__":
              "observation.images.top": {"dtype": "video", "shape": (480, 640, 3), "names": ["height", "width", "channels"]},
              "observation.images.wrist": {"dtype": "video", "shape": (480, 640, 3), "names": ["height", "width", "channels"]}}
     ds = LeRobotDataset.create(a.repo, FPS, feats, root=root, robot_type="so_follower", rgb_encoder=RGBEncoderConfig(vcodec="h264", pix_fmt="yuv420p", g=2, crf=30))
-    gen = DemoGen(kp=a.kp, light=a.light, rng=np.random.default_rng(a.seed), rand=a.rand, dart=a.dart); ok_n = 0; t0 = time.time(); log = []
+    gen = DemoGen(kp=a.kp, light=a.light, rng=np.random.default_rng(a.seed), rand=a.rand, dart=a.dart, diverse=a.diverse); ok_n = 0; t0 = time.time(); log = []
     for i in range(a.n):
         cubes = gen.sample_cubes(a.range); t1 = time.time()
         ok, nf, info = gen.run_episode(cubes, record=ds.add_frame, preview=(f"calib/sim/demo_preview" if (a.preview and i == 0) else None), verbose=a.verbose)
