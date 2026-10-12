@@ -4,7 +4,7 @@
 
 > 한 줄 요약: 같은 로봇, 같은 작업(주황 큐브를 빨강 큐브 위에 쌓기)을 **모방학습**(ACT → SmolVLA + DAgger)과 **고전 파이프라인**(카메라 보정 → 역기구학 → 시각 서보)으로 각각 구현하고, 같은 잣대로 비교했다. 시연 범위 안에서는 고전 10/10 대 학습 4/10, 범위 밖에서는 7/10 대 0/10. 두 방식은 서로 다른 곳에서 무너진다. 이어서 MuJoCo 시뮬레이터를 실측으로 맞추고 **사람 시연 없이 자동 생성한 시연만으로** 학습한 정책을 실물에 올렸더니 2/10(실물 시연 정책 3~4/10과 같은 구간)을 냈다. 시뮬의 병목은 물리가 아니라 시연의 다양성이었다.
 
-> **English abstract.** Same low-cost arm (SO-101), same task (stack an orange cube on a red one), three approaches compared with the same 10-trial protocol: **imitation learning** (ACT → SmolVLA + RTC + DAgger, 176 human demos + 40 corrections → 9/10 stack, 7/10 unstack, 5/5 counterfactual), a **classical pipeline** (camera calibration → IK → wrist-camera visual servo → 10/10 in-distribution, 7/10 out-of-distribution vs. 4/10 and 0/10 for the learned policy), and **sim-to-real** (a MuJoCo simulator fitted by measurement, 296 auto-generated demos, zero human demos → 2/10 on the real arm, the same range as the real-demo policies; simulated success did not predict transfer, and the bottleneck was demonstration diversity, not physics). English summary: [`research_summary_en.md`](research_summary_en.md) · 2-minute video: [`videos/summary_2min_1009.mp4`](videos/summary_2min_1009.mp4) · daily research log (Korean, every failure included): [`SO101_연구노트.md`](SO101_연구노트.md).
+> **English abstract.** Same low-cost arm (SO-101), same task (stack an orange cube on a red one), three approaches compared with the same 10-trial protocol: **imitation learning** (ACT → SmolVLA + RTC + DAgger, 176 human demos + 40 corrections → 9/10 stack, 7/10 unstack, 5/5 counterfactual), a **classical pipeline** (camera calibration → IK → wrist-camera visual servo → 10/10 in-distribution, 7/10 out-of-distribution vs. 4/10 and 0/10 for the learned policy), and **sim-to-real** (a MuJoCo simulator fitted by measurement, 296 auto-generated demos, zero human demos → 2/10 on the real arm, the same range as the real-demo policies; simulated success did not predict transfer, and the bottleneck was demonstration diversity, not physics). English summary: [`research_summary_en.md`](research_summary_en.md) · 2-minute video: [`videos/summary_2min_1009.mp4`](videos/summary_2min_1009.mp4) · daily research log (Korean, every failure included): [`SO101_연구노트.md`](SO101_연구노트.md). Repository: https://github.com/GGOMOONG/so101-cube-stacking
 
 ---
 
@@ -215,10 +215,10 @@ robotics/
 
 | 용도 | 저장소 | 공개 |
 |---|---|---|
-| 실물 시연 + DAgger 교정(v4 학습 데이터, 216회) | `moonbeards/color_cube_stack_unstack2_dagger2` | 공개 |
-| 시뮬 시연 v2(296회, 시뮬→실물 전이에 쓴 데이터) | `moonbeards/sim_stack_v2` | 공개 |
-| 실물 시연 정책 v4 (SmolVLA) | `moonbeards/smolvla_color_cube_stack_unstack2_v4` | 공개 |
-| 시뮬 전용 정책 v2 10k (SmolVLA) | `moonbeards/smolvla_sim_stack_v2` (체크포인트 `checkpoint_010000` 사용) | 공개 |
+| 실물 시연 + DAgger 교정(v4 학습 데이터, 216회) | [`moonbeards/color_cube_stack_unstack2_dagger2`](https://huggingface.co/datasets/moonbeards/color_cube_stack_unstack2_dagger2) | 공개 |
+| 시뮬 시연 v2(296회, 시뮬→실물 전이에 쓴 데이터) | [`moonbeards/sim_stack_v2`](https://huggingface.co/datasets/moonbeards/sim_stack_v2) | 공개 |
+| 실물 시연 정책 v4 (SmolVLA) | [`moonbeards/smolvla_color_cube_stack_unstack2_v4`](https://huggingface.co/moonbeards/smolvla_color_cube_stack_unstack2_v4) | 공개 |
+| 시뮬 전용 정책 v2 10k (SmolVLA) | [`moonbeards/smolvla_sim_stack_v2`](https://huggingface.co/moonbeards/smolvla_sim_stack_v2) (체크포인트 `checkpoint_010000` 사용) | 공개 |
 | 중간 단계·롤아웃·무효 데이터(`sim_stack_v1/v3/v3b` 등), 나머지 모델 | 비공개 | 문의 시 |
 
 

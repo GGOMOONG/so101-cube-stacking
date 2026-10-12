@@ -100,7 +100,7 @@ SCENES = [
  ("image", f"{R}/figures/fig_sim_curves_ko.png", 6, "시뮬 안 천장 약 4/10, 더 학습하면 오히려 떨어진다 (시연이 너무 균일)", "Ceiling ~4/10 even in sim; more training hurts (demos too uniform)"),
  ("image", f"{R}/figures/fig_sim2real_ko.png", 8, "실물 A: 시뮬 전용 2/10 대 실물 시연 3~4/10 · 시뮬 성적은 전이를 예측 못 함", "Real arm: sim-only 2/10 vs real-demo 3–4/10 · sim score ≠ transfer"),
  ("image", f"{R}/figures/fig_pipelines_ko.png", 5, "다음: 시뮬 시연 다양화, 놓기 서보, 혼합 제어", "Next: diversify simulated demos, closed-loop placing, hybrid control"),
- ("title", f"{R}/photos/setup_full2.JPG", 5, "moonbeards · SO-101 · 2026-09/10", "코드·연구노트·데이터: github (준비 중)"),
+ ("title", f"{R}/photos/setup_full2.JPG", 5, "moonbeards · SO-101 · 2026-09/10", "github.com/GGOMOONG/so101-cube-stacking · huggingface.co/moonbeards"),
 ]
 if __name__ == "__main__":
     os.makedirs(f"{R}/videos", exist_ok=True); build(SCENES, f"{R}/videos/summary_2min_draft.mp4")

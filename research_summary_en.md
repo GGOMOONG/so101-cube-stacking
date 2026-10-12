@@ -3,6 +3,8 @@
 **Independent research project, September 13 – October 9, 2026 (27 days)**
 Hardware: SO-101 leader/follower arm (Feetech STS3215 servos), two UVC cameras (top, wrist), 3 cm colored cubes, Mac mini M4 Pro. Software: LeRobot, ACT, SmolVLA, OpenCV, MuJoCo. Training: cloud GPUs (RTX 4090 / 6000 Ada / 3090 / 5090). All code, calibration data, and a daily research log are in the repository.
 
+Repository (code, research log, data, video): https://github.com/GGOMOONG/so101-cube-stacking
+
 ## Research question
 
 Two paradigms dominate robot manipulation today: **imitation learning**, where a policy learns from human demonstrations, and the **classical pipeline**, where perception, calibration, and kinematics are engineered explicitly. They are usually studied separately. I implemented both on the same robot for the same task, cube stacking, and asked: *where exactly does each one break, and are the failure modes the same?*
