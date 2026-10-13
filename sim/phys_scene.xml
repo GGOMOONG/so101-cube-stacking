@@ -1,12 +1,12 @@
 <mujoco model="so101_phys_scene">
   <include file="so101_phys.xml"/>
-  <visual><headlight diffuse="0.2642866736210635 0.2642866736210635 0.2642866736210635" ambient="0.331088339074598 0.331088339074598 0.331088339074598"/><global azimuth="135" elevation="-35" offwidth="1280" offheight="960"/></visual>
+  <visual><headlight diffuse="0.3 0.3 0.3" ambient="0.4 0.4 0.4"/><global azimuth="135" elevation="-35" offwidth="1280" offheight="960"/></visual>
   <worldbody>
-    <light pos="0.42 0.00 1.30" dir="-0.2 0.2 -1" diffuse="0.14444853951397826 0.14444853951397826 0.14444853951397826" castshadow="true"/>
-    <light pos="-0.3 0.4 1.0" dir="0.3 -0.4 -1" diffuse="0.3436483723289529 0.3436483723289529 0.3436483723289529" castshadow="false"/>
-    <geom name="table" type="box" size="0.6 0.6 0.01" pos="0.240842 -0.014432 -0.014166" quat="0.711370 0.001436 0.008269 -0.702767" rgba="0.704 0.704 0.704 1" contype="1" conaffinity="1" friction="0.8 0.01 0.001"/>
-    <body name="orange" pos="0.158868 -0.008818 0.011783" quat="0.684196 0.001121 0.008318 -0.729250"><freejoint name="orange_free"/><geom name="orange" type="box" size="0.015069716102969467 0.015069716102969467 0.015069716102969467" mass="0.015" rgba="0.967 0.398 0.124 1" friction="0.7 0.01 0.001" contype="1" conaffinity="1" solref="-50000 -300" priority="1"/></body>
-<body name="red" pos="0.227209 0.096972 0.012563" quat="0.658217 0.000829 0.008352 -0.752781"><freejoint name="red_free"/><geom name="red" type="box" size="0.015069716102969467 0.015069716102969467 0.015069716102969467" mass="0.015" rgba="0.735 0.184 0.244 1" friction="1.2 0.01 0.001" contype="1" conaffinity="1" solref="-50000 -300" priority="1"/></body>
-<camera name="top" pos="0.530481 -0.006111 0.533336" quat="0.686648 0.175790 0.133950 0.692582" resolution="640 480" focalpixel="703.38 699.66" principalpixel="-3.40 6.28" sensorsize="0.0036 0.0027"/>
+    <light pos="0.3 -0.3 1.2" dir="-0.2 0.2 -1" diffuse="0.15 0.15 0.15" castshadow="true"/>
+    <light pos="-0.3 0.4 1.0" dir="0.3 -0.4 -1" diffuse="0.25 0.25 0.25" castshadow="false"/>
+    <geom name="table" type="box" size="0.6 0.6 0.01" pos="0.240842 -0.014432 -0.014166" quat="0.711370 0.001436 0.008269 -0.702767" rgba="0.68 0.68 0.68 1" contype="1" conaffinity="1" friction="0.8 0.01 0.001"/>
+    <body name="orange" pos="0.246870 -0.030002 0.010566" quat="0.711983 0.001443 0.008268 -0.702146"><freejoint name="orange_free"/><geom name="orange" type="box" size="0.015 0.015 0.015" mass="0.015" rgba="0.9 0.38 0.12 1" friction="0.7 0.01 0.001" contype="1" conaffinity="1" solref="-50000 -300" priority="1"/></body>
+<body name="red" pos="0.285745 0.013473 0.010781" quat="0.711370 0.001436 0.008269 -0.702767"><freejoint name="red_free"/><geom name="red" type="box" size="0.015 0.015 0.015" mass="0.015" rgba="0.78 0.19 0.23 1" friction="1.2 0.01 0.001" contype="1" conaffinity="1" solref="-50000 -300" priority="1"/></body>
+<camera name="top" pos="0.531840 -0.005081 0.535961" quat="0.687143 0.171757 0.140230 0.691859" resolution="640 480" focalpixel="703.38 699.66" principalpixel="-3.40 6.28" sensorsize="0.0036 0.0027"/>
   </worldbody>
 </mujoco>

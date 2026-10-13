@@ -2,7 +2,11 @@
 # v4 학습 곡선: 시연 다양화 데이터(sim_stack_v4, v2 조건)로 학습한 체크포인트를 2.5k마다 시뮬 A 10회 평가, 최종은 A/B. 새 lerobot의 config.json dtype 키는 저장 직후 제거.
 # 로그 logs/watch_ckpt_v4.log, 결과 calib/sim_policy_runs.csv 태그 ckpt4_<시각>_A. 최종(README.md) 도착 후엔 종료(최종 평가는 watch_sim_policy_v2.sh가 담당).
 source ~/miniconda3/etc/profile.d/conda.sh; conda activate lerobot
-cd ~/robotics; mkdir -p logs; LOG=logs/watch_ckpt_v4.log; MODEL=moonbeards/smolvla_sim_stack_v4; last=""
+cd ~/robotics; mkdir -p logs; LOG=logs/watch_ckpt_v4.log; MODEL=moonbeards/smolvla_sim_stack_v4; last=$(python -c "
+from huggingface_hub import HfApi
+try:
+    i = HfApi().get_paths_info('moonbeards/smolvla_sim_stack_v4', ['model.safetensors']); print(i[0].lfs.sha256 if i and i[0].lfs else '')
+except Exception: print('')" 2>/dev/null)   # 재시작 시 이미 평가한 현재 루트는 건너뜀
 echo "$(date '+%m-%d %H:%M') 체크포인트 감시 시작" >> $LOG
 while true; do
   sha=$(python -c "

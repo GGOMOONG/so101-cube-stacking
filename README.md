@@ -2,9 +2,9 @@
 
 **기간** 2026-09-13 ~ 10-09 (27일) · **장비** SO-101 리더/팔로워 (Feetech STS3215), Mac mini M4 Pro, UVC 카메라 2대(탑·손목), 3 cm 색 큐브 · **소프트웨어** LeRobot, ACT, SmolVLA, OpenCV, MuJoCo · **학습** RunPod (RTX 4090 / 6000 Ada / 3090 / 5090) · **허브** `moonbeards`
 
-> 한 줄 요약: 같은 로봇, 같은 작업(주황 큐브를 빨강 큐브 위에 쌓기)을 **모방학습**(ACT → SmolVLA + DAgger)과 **고전 파이프라인**(카메라 보정 → 역기구학 → 시각 서보)으로 각각 구현하고, 같은 잣대로 비교했다. 시연 범위 안에서는 고전 10/10 대 학습 4/10, 범위 밖에서는 7/10 대 0/10. 두 방식은 서로 다른 곳에서 무너진다. 이어서 MuJoCo 시뮬레이터를 실측으로 맞추고 **사람 시연 없이 자동 생성한 시연만으로** 학습한 정책을 실물에 올렸더니 2/10(실물 시연 정책 3~4/10과 같은 구간)을 냈다. 시뮬의 병목은 물리가 아니라 시연의 다양성이었다.
+> 한 줄 요약: 같은 로봇, 같은 작업(주황 큐브를 빨강 큐브 위에 쌓기)을 **모방학습**(ACT → SmolVLA + DAgger)과 **고전 파이프라인**(카메라 보정 → 역기구학 → 시각 서보)으로 각각 구현하고, 같은 잣대로 비교했다. 시연 범위 안에서는 고전 10/10 대 학습 4/10, 범위 밖에서는 7/10 대 0/10. 두 방식은 서로 다른 곳에서 무너진다. 이어서 MuJoCo 시뮬레이터를 실측으로 맞추고 **사람 시연 없이 자동 생성한 시연만으로** 학습한 정책을 실물에 올렸더니 2/10(실물 시연 정책 3~4/10과 같은 구간)을 냈다. 시뮬 안에서도 성공률은 약 4/10에서 막혔고, 시연을 다양화한 데이터(v4)는 오히려 0/10이었다. 병목은 물리도, 시연의 다양성 부족도 아니었다.
 
-> **English abstract.** Same low-cost arm (SO-101), same task (stack an orange cube on a red one), three approaches compared with the same 10-trial protocol: **imitation learning** (ACT → SmolVLA + RTC + DAgger, 176 human demos + 40 corrections → 9/10 stack, 7/10 unstack, 5/5 counterfactual), a **classical pipeline** (camera calibration → IK → wrist-camera visual servo → 10/10 in-distribution, 7/10 out-of-distribution vs. 4/10 and 0/10 for the learned policy), and **sim-to-real** (a MuJoCo simulator fitted by measurement, 296 auto-generated demos, zero human demos → 2/10 on the real arm, the same range as the real-demo policies; simulated success did not predict transfer, and the bottleneck was demonstration diversity, not physics). English summary: [`research_summary_en.md`](research_summary_en.md) · 2-minute video: [`videos/summary_2min_1009.mp4`](videos/summary_2min_1009.mp4) · daily research log (Korean, every failure included): [`SO101_연구노트.md`](SO101_연구노트.md). Repository: https://github.com/GGOMOONG/so101-cube-stacking
+> **English abstract.** Same low-cost arm (SO-101), same task (stack an orange cube on a red one), three approaches compared with the same 10-trial protocol: **imitation learning** (ACT → SmolVLA + RTC + DAgger, 176 human demos + 40 corrections → 9/10 stack, 7/10 unstack, 5/5 counterfactual), a **classical pipeline** (camera calibration → IK → wrist-camera visual servo → 10/10 in-distribution, 7/10 out-of-distribution vs. 4/10 and 0/10 for the learned policy), and **sim-to-real** (a MuJoCo simulator fitted by measurement, 296 auto-generated demos, zero human demos → 2/10 on the real arm, the same range as the real-demo policies; simulated success did not predict transfer, and a diversified demonstration set made it worse, 0/10, so the bottleneck was neither physics nor a lack of demonstration diversity). English summary: [`research_summary_en.md`](research_summary_en.md) · 2-minute video: [`videos/summary_2min_1009.mp4`](videos/summary_2min_1009.mp4) · daily research log (Korean, every failure included): [`SO101_연구노트.md`](SO101_연구노트.md). Repository: https://github.com/GGOMOONG/so101-cube-stacking
 
 ---
 
@@ -117,7 +117,7 @@ MuJoCo 간섭 검사 → 손목 회전 후보 중 빨강과 안 부딪히는 것
 
 ![시뮬 학습 곡선](figures/fig_sim_curves_ko.png)
 
-*그림 3. 시뮬 데이터만으로 학습한 세 정책의 체크포인트별 시뮬 성공 횟수. 세 번 모두 2.5k~10k가 최고이고 이후 0~2/10로 떨어진다.*
+*그림 3. 시뮬 데이터만으로 학습한 네 정책의 체크포인트별 시뮬 성공 횟수. v2·v3·v3b는 2.5k~10k가 최고이고 이후 0~2/10로 떨어지며, 시연을 다양화한 v4는 모든 체크포인트에서 0/10이다(학습 2회 재현).*
 
 | 데이터셋 | 시연 | 최고 체크포인트 (시뮬 A) | 최종 (시뮬 A / B) |
 |---|---|---|---|
@@ -125,6 +125,7 @@ MuJoCo 간섭 검사 → 손목 회전 후보 중 빨강과 안 부딪히는 것
 | v2 단단한 큐브·게인·놓기 보정 | 296 | **10k 3·4·6/10 (반복 3회)** (B 4/10) | 30k 0/10 / 2/10 |
 | v3 손목 카메라 오보정 | 259 | 2.5k 3/10 | 15k 0/10 / 2/10 (무효) |
 | v3b v2 + 기판·조명·DART | 258 | 5k 4/10 | 10k 2/10 / 2/10 |
+| v4 v2 + 시연 다양화(접근 3종·속도·머뭇거림·복구 30 %) | 278 | 전 구간 0/10 (학습 2회) | 10k 0/10 / 0/10 |
 
 **시뮬 전용 정책의 실물 평가(P 16, 격자 없음, 각 10회)**
 
@@ -155,7 +156,7 @@ MuJoCo 간섭 검사 → 손목 회전 후보 중 빨강과 안 부딪히는 것
 
 
 **시뮬 전용 정책이 무너지는 곳**
-- **일찍 과적합한다.** 세 데이터셋 모두 2.5k~10k 체크포인트가 최고(약 4/10; v2 10k 반복 3·4·6)이고 그 뒤 0~2/10(같은 체크포인트 10회 반복의 흩어짐은 ±2 정도). 후반 체크포인트는 잡기는 되는데 놓기 위치를 일정하게 2 cm 비켜 놓는다(외운 궤적). 계획기 시연이 항상 같은 방식으로 성공만 하므로, "보고 고치는" 행동을 배울 재료가 없다. DART식 교란(v3b)은 이 천장을 올리지 못했다.
+- **일찍 과적합한다.** 세 데이터셋 모두 2.5k~10k 체크포인트가 최고(약 4/10; v2 10k 반복 3·4·6)이고 그 뒤 0~2/10(같은 체크포인트 10회 반복의 흩어짐은 ±2 정도). 후반 체크포인트는 잡기는 되는데 놓기 위치를 일정하게 2 cm 비켜 놓는다(외운 궤적). 계획기 시연이 항상 같은 방식으로 성공만 하므로, "보고 고치는" 행동을 배울 재료가 없다. DART식 교란(v3b)은 이 천장을 올리지 못했다. **시연을 다양화한 v4(접근 전략 3종·속도·머뭇거림·빗나간 잡기 후 복구 30 %)는 더 나빠서 2.5k~10k 전 구간 0/10이었고, 독립 학습 2회에서 재현됐다.** 영상에서는 주황 위 4~16 mm까지 가서 닫지 않고 머뭇거리거나 어긋난 자리에서 닫는다. 복구 시연이 "큐브 옆에서 닫는다"는 짝을 30 % 공급하고 머뭇거림 시연이 "내려간 뒤 기다린다"로 학습된 것과 맞는 양상이다. 즉 300회 규모에서는 시연을 섞을수록 닫기 결정이 흐려진다.
 - **시뮬 내 성공률은 실물 전이를 예측하지 못한다.** v3b는 시뮬에서 v2와 같은 수준(최고 4/10)이었지만 실물에서는 두 체크포인트 모두 0/10(합계 0/20). v2에 더한 세 가지(기판 형상·그림자 완화 조명·DART 교란) 중 무엇이 해쳤는지는 분리하지 못했다(각각 따로 학습해야 함). DART는 실행 궤적은 교란되고 기록 상태는 깨끗한 명령이라 화면–상태 관계가 실물과 달라지는 점이 의심된다.
 - **실물 실패 양상은 실물 정책과 같다.** 시뮬 v2의 실물 실패는 "주황을 밀어냄"(잡기) 5회와 놓기 3회로, v4·v5의 실패 유형과 겹친다. 범위 밖 배치(B)에서는 0/10으로, 시뮬 안에서 B 4/10이던 일반화가 실물로 옮겨지지 않았다(v4 B 0/10과 같음). 시뮬에서 배운 "손목을 90° 돌려 잡기"(계획기가 간섭을 피하려 고른 회전)가 실물에서도 그대로 나왔다.
 - **카메라 모델 오류 한 번이 데이터셋 하나를 날렸다.** 손목 사진과 시뮬 렌더의 큐브 실루엣을 맞출 때 큐브를 고정 턱 면 선 위에 놓는 실수(실제 중심은 열림 방향으로 15 mm)로 카메라를 9 mm 잘못 옮겼고, 그 카메라로 만든 v3는 실물 0/10이었다. 실물에서 "벌어지는 턱이 주황을 누른다"는 관찰이 오류를 드러냈고, 바로잡은 뒤 원래 hand-eye 카메라가 맞다는 것(IoU 0.61 vs 0.35)을 확인했다. 자로 잰 110/65/90 mm가 기준점이 됐다.
@@ -178,14 +179,14 @@ MuJoCo 간섭 검사 → 손목 회전 후보 중 빨강과 안 부딪히는 것
 6. **기록이 실험을 구했다.** 매일 남긴 연구노트 덕에 "카메라가 30 cm 움직였다"(실은 해상도 차이), "턱이 헛돈다"(실은 측정 지점 차이) 같은 오판을 되돌릴 수 있었다.
 
 7. **시뮬 데이터만으로도 실물 시연 정책과 같은 구간에 닿는다.** 사람 시연 0회인 시뮬 v2가 실물 2/10, 실물 시연 216~236회인 v4·v5가 같은 환경에서 3~4/10. 무료로 만든 데이터가 실물 수준에 근접했다는 뜻이지, 넘어섰다는 뜻은 아니다(n=10, 차이는 잡음 범위).
-8. **시뮬의 병목은 물리나 카메라가 아니라 시연의 다양성이다.** 동역학·접촉·카메라·조명을 실측으로 맞춘 뒤에도 시뮬 내 천장은 약 4/10(반복 3·4·6)이고 더 학습하면 떨어진다. 계획기가 만든 시연은 사람 시연보다 균일해서 정책이 외워 버린다.
+8. **시뮬의 병목은 물리·카메라도, 시연의 다양성 부족도 아니었다.** 동역학·접촉·카메라·조명을 실측으로 맞춘 뒤에도 시뮬 내 천장은 약 4/10(반복 3·4·6)이고 더 학습하면 떨어진다. "계획기 시연이 균일해서"라는 가설로 시연을 다양화했더니(v4) 오히려 0/10이 됐다. 300회 규모에서는 한 가지 방식으로 깨끗하게 성공하는 시연이 섞인 시연보다 낫고, 남는 가설은 데이터 양과 계획기 시연에 시각 피드백 교정이 없다는 질적 차이다.
 9. **맞춤(fitting)은 가정이 틀리면 자신 있게 틀린 답을 준다.** 카메라 맞춤은 IoU가 올라갔다고 보고했지만 큐브 위치 가정이 틀려 있었다. 실물의 실패 양상과 자 실측이 오류를 잡았다. 최적화 결과는 독립된 측정으로 한 번은 대조해야 한다.
 
 ## 6. 다음
 
 - **놓기 서보**: 놓기 직전 탑·손목 카메라로 들고 있는 큐브와 목표를 비교해 보정. 현재는 그리퍼 가림으로 측정 치우침 12~27 mm.
 - **혼합 구조**: 접근·정렬은 고전, 잡기·놓기는 학습.
-- **시뮬 시연의 다양화**: 계획기에 접근 전략·속도·실패 후 재시도를 섞고, 관측(화면 질감·노출)에도 무작위화를 넣어 과적합 천장(약 4/10)을 올리는 것이 시뮬→실물의 다음 단계. 실물 시연 소량 + 시뮬 시연 혼합 학습은 그다음.
+- **시뮬 데이터의 양과 혼합 학습**: 시연 다양화는 해로웠으므로(v4 0/10), 다음은 단일 전략 시연을 2~3배(600~900회)로 늘리는 것과, 실물 시연 소량(20~40회) + 시뮬 시연 혼합 학습이다. 다양화 요인 분리(전략만 / 복구만)는 각 3시간·2달러의 추가 학습이 필요하다.
 - **손목 카메라 커넥터 고정**: 손목 움직임에 커넥터가 당겨져 간헐 정지가 재발. 실패 원인 분리를 위해 먼저 해결할 하드웨어 항목.
 - **양팔**: 두 번째 SO-101과 카메라 1대 추가, 격자 보정 재사용.
 
@@ -229,7 +230,7 @@ robotics/
 | 시뮬 시연 v2(296회, 시뮬→실물 전이에 쓴 데이터) | [`moonbeards/sim_stack_v2`](https://huggingface.co/datasets/moonbeards/sim_stack_v2) | 공개 |
 | 실물 시연 정책 v4 (SmolVLA) | [`moonbeards/smolvla_color_cube_stack_unstack2_v4`](https://huggingface.co/moonbeards/smolvla_color_cube_stack_unstack2_v4) | 공개 |
 | 시뮬 전용 정책 v2 10k (SmolVLA) | [`moonbeards/smolvla_sim_stack_v2`](https://huggingface.co/moonbeards/smolvla_sim_stack_v2) (체크포인트 `checkpoint_010000` 사용) | 공개 |
-| 중간 단계·롤아웃·무효 데이터(`sim_stack_v1/v3/v3b` 등), 나머지 모델 | 비공개 | 문의 시 |
+| 중간 단계·롤아웃·무효·보조 데이터(`sim_stack_v1/v3/v3b/v4` 등), 나머지 모델(`smolvla_sim_stack_v4` 포함) | 비공개 | 문의 시 |
 
 
 ## 8. 참고문헌
